@@ -1,0 +1,21 @@
+services:
+  - type: worker
+    name: sweet-ai-telegram-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: BOT_NAME
+        value: "SWEET AI BOT"
+      - key: BOT_USERNAME
+        value: "Sweet_AI_Bot"
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MINI_APP_URL
+        sync: false
+      - key: CHANNEL_URL
+        sync: false
+      - key: VIP_GROUP_URL
+        sync: false

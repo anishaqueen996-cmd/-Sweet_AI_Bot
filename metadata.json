@@ -1,0 +1,6 @@
+{
+  "name": "Celestia AI - Telegram Bot & Mini App Hub",
+  "description": "Production Python Telegram Bot backend with Gemini AI integration, Render.com deployment setup, and interactive Mini App dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
