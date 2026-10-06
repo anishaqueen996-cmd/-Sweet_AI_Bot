@@ -33,27 +33,16 @@ load_dotenv()
 # ==========================================
 # CONFIGURATION
 # ==========================================
-# Bot Identity
 BOT_NAME = os.getenv("BOT_NAME", "SWEET AI BOT").strip()
 BOT_USERNAME = os.getenv("BOT_USERNAME", "Sweet_AI_Bot").strip()
-
-# Telegram Bot Token
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8963842583:AAEiCZLMwOVfnQCpw7sW1W6lz2ThPOdbeok").strip()
-
-# Google Gemini API Key
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 
-# Mini App URL (Telegram WebApp target)
 MINI_APP_URL = os.getenv("MINI_APP_URL", "https://your-mini-app-url.com").strip()
-
-# Community Links
 CHANNEL_URL = os.getenv("CHANNEL_URL", "https://t.me/sweet_ai_official").strip()
 VIP_GROUP_URL = os.getenv("VIP_GROUP_URL", "https://t.me/sweet_ai_vip").strip()
-TUTORIAL_URL = os.getenv("TUTORIAL_URL", "https://youtube.com").strip()
 AFFILIATE_PERCENT = os.getenv("AFFILIATE_PERCENT", "50%").strip()
 
-# Group Behavior: Answer all messages in groups
-# Set to True so whenever ANYONE sends a message in a group, the bot answers!
 GROUP_REPLY_ALL = os.getenv("GROUP_REPLY_ALL", "true").strip().lower() in ("true", "1", "yes")
 
 # Setup Logging
@@ -83,7 +72,7 @@ if GEMINI_API_KEY:
     except Exception as e:
         logger.error(f"❌ Error initializing Gemini AI: {e}")
 else:
-    logger.warning("⚠️ GEMINI_API_KEY is not set. Please set it in your Render environment variables.")
+    logger.warning("⚠️ GEMINI_API_KEY is not set in environment variables.")
 
 # ==========================================
 # RENDER.COM HEALTH CHECK HTTP SERVER
@@ -109,7 +98,6 @@ def start_health_server():
 # KEYBOARDS
 # ==========================================
 def get_main_keyboard() -> InlineKeyboardMarkup:
-    """Builds inline keyboard matching the high-quality Telegram bot profile."""
     keyboard = [
         [
             InlineKeyboardButton(
@@ -140,7 +128,6 @@ def get_main_keyboard() -> InlineKeyboardMarkup:
 # BOT HANDLERS
 # ==========================================
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handles /start command."""
     user = update.effective_user
     chat = update.effective_chat
     first_name = user.first_name if user else "Friend"
@@ -160,7 +147,6 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         )
         return
 
-    # Private chat welcome
     welcome_text = (
         f"Welcome to *{BOT_NAME}* - Group Moderator & Rewards Bot\n\n"
         f"Hello, *{first_name}*! 👋\n\n"
@@ -169,7 +155,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         "• 🛡️ *Group Moderator & Spam Shield*: Auto-deletes scam links & flood messages\n"
         f"• 💎 *Affiliate Program*: Earn *{AFFILIATE_PERCENT}* lifetime commission\n"
         "• 📱 *Mini App Tasks*: Complete community missions to earn rewards!\n\n"
-        "Tap **Open App** below or add me to your group to get started:"
+        "Tap *Open App* below or add me to your group to get started:"
     )
 
     await update.message.reply_text(
@@ -177,10 +163,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         reply_markup=get_main_keyboard(),
         parse_mode=ParseMode.MARKDOWN,
     )
-    logger.info(f"User {user.id} ({user.username}) executed /start in {chat.type}")
 
 async def ask_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Explicit /ask command for group members (e.g. /ask what is machine learning?)."""
     if not context.args:
         await update.message.reply_text("💡 Usage: `/ask <your question>`\nExample: `/ask What is Bitcoin?`", parse_mode=ParseMode.MARKDOWN)
         return
@@ -188,12 +172,10 @@ async def ask_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     await generate_and_reply_ai(update, context, question)
 
 async def new_members_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Welcomes new members joining the Telegram group."""
     if not update.message or not update.message.new_chat_members:
         return
 
     for new_member in update.message.new_chat_members:
-        # Ignore if bot itself was added
         if new_member.id == context.bot.id:
             await update.message.reply_text(
                 f"🎉 Thanks for adding *{BOT_NAME}* to this group!\n\n"
@@ -207,14 +189,10 @@ async def new_members_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
             continue
 
         name = new_member.first_name or "New Member"
-        welcome_msg = (
-            f"👋 Welcome to the group, *{name}*!\n\n"
-            f"I am *{BOT_NAME}*. Feel free to chat or ask me any question here!"
-        )
+        welcome_msg = f"👋 Welcome to the group, *{name}*!\n\nI am *{BOT_NAME}*. Feel free to chat or ask me any question here!"
         await update.message.reply_text(welcome_msg, parse_mode=ParseMode.MARKDOWN)
 
 async def callback_query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handles callback buttons such as Affiliate Program."""
     query = update.callback_query
     await query.answer()
 
@@ -270,11 +248,9 @@ async def callback_query_handler(update: Update, context: ContextTypes.DEFAULT_T
         )
 
 async def generate_and_reply_ai(update: Update, context: ContextTypes.DEFAULT_TYPE, user_text: str) -> None:
-    """Helper that queries Gemini 1.5 Flash and replies directly to the user message."""
     chat = update.effective_chat
     user = update.effective_user
 
-    # Show typing indicator
     await context.bot.send_chat_action(chat_id=chat.id, action=ChatAction.TYPING)
 
     if not gemini_model:
@@ -294,7 +270,6 @@ async def generate_and_reply_ai(update: Update, context: ContextTypes.DEFAULT_TY
 
         reply_content = response.text if response and response.text else "Sorry, I could not generate an answer right now."
 
-        # Reply directly quoted to the group member's message
         try:
             await update.message.reply_text(
                 reply_content,
@@ -302,7 +277,6 @@ async def generate_and_reply_ai(update: Update, context: ContextTypes.DEFAULT_TY
                 reply_to_message_id=update.message.message_id,
             )
         except Exception:
-            # Fallback to plain text if special characters break markdown
             await update.message.reply_text(
                 reply_content,
                 reply_to_message_id=update.message.message_id,
@@ -318,30 +292,20 @@ async def generate_and_reply_ai(update: Update, context: ContextTypes.DEFAULT_TY
         )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Handles ANY message sent in private chat OR group chats!
-    Whenever anyone sends an SMS/message in the group, the bot answers!
-    """
     if not update.message or not update.message.text:
         return
 
     user_text = update.message.text.strip()
     chat = update.effective_chat
 
-    # Ignore unrecognized commands
     if user_text.startswith("/"):
         return
 
-    # Check if message is in a Group / Supergroup
     is_group = chat.type in (ChatType.GROUP, ChatType.SUPERGROUP)
 
     if is_group:
-        # In a group:
-        # Strip bot username if mentioned (e.g., "@Sweet_AI_Bot what is python?")
         clean_text = user_text.replace(f"@{BOT_USERNAME}", "").strip()
 
-        # If GROUP_REPLY_ALL is True, reply to EVERY message in the group!
-        # If False, reply if mentioned or if replying to the bot
         bot_id = context.bot.id
         is_reply_to_bot = (
             update.message.reply_to_message
@@ -353,7 +317,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if GROUP_REPLY_ALL or is_reply_to_bot or is_mentioned:
             await generate_and_reply_ai(update, context, clean_text or user_text)
     else:
-        # In Private Chat: always reply
         await generate_and_reply_ai(update, context, user_text)
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -367,20 +330,17 @@ def main():
         logger.critical("❌ Missing TELEGRAM_BOT_TOKEN")
         sys.exit(1)
 
-    # Start health check server on Render
-    if os.environ.get("RENDER"):
-        server_thread = threading.Thread(target=start_health_server, daemon=True)
-        server_thread.start()
+    # Web Service-এর জন্য Health Check Server চালু রাখা বাধ্যতামূলক
+    server_thread = threading.Thread(target=start_health_server, daemon=True)
+    server_thread.start()
 
     logger.info(f"🚀 Starting {BOT_NAME} Telegram Bot...")
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # Handlers
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("ask", ask_command))
     application.add_handler(CallbackQueryHandler(callback_query_handler))
     application.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, new_members_handler))
-    # Handles all text messages in private and group chats
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_error_handler(error_handler)
 
